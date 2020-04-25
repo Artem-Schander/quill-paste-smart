@@ -1,6 +1,6 @@
 # Quill Paste Smart
 
-This plugin extends the default clipboard module of [Quill.js](https://github.com/quilljs/quill) to prevent users from pasting HTML that does not belong into the editor. To do so it looks into your toolbar configuration and deciding which tags and attributes are allowed based on the possible formats.  
+This plugin extends the default clipboard module of [Quill.js](https://github.com/quilljs/quill) to prevent users from pasting HTML that does not belong into the editor. To do so it looks into the toolbar configuration and decides which tags and attributes are allowed based on the possible formats.  
 However, you can also decide on your own, what is allowed.
 
 <br>
@@ -35,7 +35,7 @@ Quill.register('modules/clipboard', PasteSmart, true);
 
 Out of the box this plugin will remove all HTML tags and attributes that are not available in the toolbar formats.  
 If you don't agree with the default settings, you can decide what is allowed by yourself.  
-Also I thought it could be useful to keep the pasted content selected after pasting.
+Also I thought it could be useful to keep the pasted content selected after pasting, so there is a setting for it too.
 
 A valid configuration could look like this:
 
