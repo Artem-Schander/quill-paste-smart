@@ -189,5 +189,5 @@ class TidyClipboard extends Clipboard {
     }
 }
 
-Quill.register('modules/clipboard', TidyClipboard, true);
+// Quill.register('modules/clipboard', TidyClipboard, true);
 export default TidyClipboard;
