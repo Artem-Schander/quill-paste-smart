@@ -11,7 +11,7 @@ You can install this plugin either with [npm](https://www.npmjs.com/) or with [y
 Run one of the following commands from your projects root in a bash prompt.
 
 ```bash
-npm -i quill-paste-smart
+npm i quill-paste-smart
 # or: yarn add quill-paste-smart
 ```
 
