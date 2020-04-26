@@ -1,6 +1,6 @@
 {
   "name": "quill-paste-smart",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Quill Extension to paste only supported HTML",
   "main": "dist/quill-paste-smart.js",
   "devDependencies": {
