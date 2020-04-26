@@ -51,7 +51,7 @@ class TidyClipboard extends Clipboard {
             let undefinedTags = false;
             if (tidy.ALLOWED_TAGS === undefined) {
                 undefinedTags = true;
-                tidy.ALLOWED_TAGS = ['span'];
+                tidy.ALLOWED_TAGS = ['p', 'br', 'span'];
             }
 
             let undefinedAttr = false;
