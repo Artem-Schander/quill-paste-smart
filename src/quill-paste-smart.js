@@ -17,26 +17,28 @@ class TidyClipboard extends Clipboard {
 
     onPaste(e) {
         e.preventDefault();
-
-        let tidy = this.getAllowed();
-
-        const dirty = e.clipboardData.getData('text/html');
-        const clean = DOMPurify.sanitize(dirty, tidy);
-        const paste = this.convert(clean);
-
         const range = this.quill.getSelection();
 
-        // delete selected content
-        let delta = new Delta().retain(range.index);
-        delta = delta.delete(range.length);
+        const text = e.clipboardData.getData('text/plain');
+        const html = e.clipboardData.getData('text/html');
+
+        let delta = new Delta().retain(range.index).delete(range.length);
+
+        let content = text;
+        if (html) {
+            const allowed = this.getAllowed();
+            content = DOMPurify.sanitize(html, allowed);
+            delta = delta.concat(this.convert(content));
+        } else {
+            delta = delta.insert(content);
+        }
+
         this.quill.updateContents(delta, Quill.sources.USER);
 
-        // insert fresh content
-        this.quill.updateContents(new Delta().retain(range.index).concat(paste), Quill.sources.API);
-
         // move cursor
-        if (this.keepSelection) this.quill.setSelection(range.index, paste.length(), Quill.sources.SILENT);
-        else this.quill.setSelection(range.index + paste.length(), Quill.sources.SILENT);
+        delta = this.convert(content);
+        if (this.keepSelection) this.quill.setSelection(range.index, delta.length(), Quill.sources.SILENT);
+        else this.quill.setSelection(range.index + delta.length(), Quill.sources.SILENT);
 
         this.quill.scrollIntoView();
     }
