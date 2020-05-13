@@ -63,7 +63,6 @@ class TidyClipboard extends Clipboard {
             }
 
             const toolbar = this.quill.getModule('toolbar');
-            console.log(toolbar.controls);
             toolbar.controls.forEach((control) => {
                 switch (control[0]) {
                     case 'bold':
