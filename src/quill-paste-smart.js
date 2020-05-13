@@ -63,6 +63,7 @@ class TidyClipboard extends Clipboard {
             }
 
             const toolbar = this.quill.getModule('toolbar');
+            console.log(toolbar.controls);
             toolbar.controls.forEach((control) => {
                 switch (control[0]) {
                     case 'bold':
@@ -109,18 +110,27 @@ class TidyClipboard extends Clipboard {
 
                     case 'header':
                         if (undefinedTags) {
-                            if (control[1].value === '1') {
-                                tidy.ALLOWED_TAGS.push('h1');
-                            } else if (control[1].value === '2') {
-                                tidy.ALLOWED_TAGS.push('h2');
-                            } else if (control[1].value === '3') {
-                                tidy.ALLOWED_TAGS.push('h3');
-                            } else if (control[1].value === '4') {
-                                tidy.ALLOWED_TAGS.push('h4');
-                            } else if (control[1].value === '5') {
-                                tidy.ALLOWED_TAGS.push('h5');
-                            } else if (control[1].value === '6') {
-                                tidy.ALLOWED_TAGS.push('h6');
+                            const detectAllowedHeadingTag = (value) => {
+                                if (value === '1') {
+                                    tidy.ALLOWED_TAGS.push('h1');
+                                } else if (value === '2') {
+                                    tidy.ALLOWED_TAGS.push('h2');
+                                } else if (value === '3') {
+                                    tidy.ALLOWED_TAGS.push('h3');
+                                } else if (value === '4') {
+                                    tidy.ALLOWED_TAGS.push('h4');
+                                } else if (value === '5') {
+                                    tidy.ALLOWED_TAGS.push('h5');
+                                } else if (value === '6') {
+                                    tidy.ALLOWED_TAGS.push('h6');
+                                }
+                            };
+
+                            if (control[1].value) detectAllowedHeadingTag(control[1].value);
+                            else if (control[1].options && control[1].options.length) {
+                                [].forEach.call(control[1].options, (option) => {
+                                    if (option.value) detectAllowedHeadingTag(option.value);
+                                });
                             }
                         }
                         break;
