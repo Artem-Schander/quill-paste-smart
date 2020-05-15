@@ -74,7 +74,7 @@ It is possible to use this module by including it though a `<script>` tag. Here 
 <body>
     <div id="editor"></div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/quill/2.0.0-dev.4/quill.min.js"></script>
+    <script src="https://unpkg.com/quill@latest/dist/quill.js"></script>
     <script src="https://unpkg.com/quill-paste-smart@latest/dist/index.js"></script>
 
     <script>
