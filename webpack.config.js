@@ -1,15 +1,19 @@
 const path = require('path');
 
 const config = {
-    entry: './src/quill-paste-smart.js',
+    entry: {
+        index: './src/index.js',
+        module: './src/module.js',
+    },
     output: {
-        filename: 'quill-paste-smart.js',
+        filename: '[name].js',
         path: path.resolve(__dirname, 'dist'),
         library: 'QuillPasteSmart',
         libraryTarget: 'umd',
+        umdNamedDefine: true,
     },
     target: 'web',
-    mode: 'production',
+    mode: 'development',
     externals: {
         quill: {
             commonjs: 'quill',

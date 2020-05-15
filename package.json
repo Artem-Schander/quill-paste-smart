@@ -2,7 +2,7 @@
   "name": "quill-paste-smart",
   "version": "1.0.6",
   "description": "Quill Extension to paste only supported HTML",
-  "main": "dist/quill-paste-smart.js",
+  "main": "dist/module.js",
   "devDependencies": {
     "@babel/core": "^7.9.0",
     "@babel/plugin-proposal-class-properties": "^7.8.3",
