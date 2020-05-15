@@ -75,7 +75,7 @@ It is possible to use this module by including it though a `<script>` tag. Here 
     <div id="editor"></div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/quill/2.0.0-dev.4/quill.min.js"></script>
-    <script src="./dist/index.js"></script>
+    <script src="https://unpkg.com/quill-paste-smart@latest/dist/index.js"></script>
 
     <script>
         Quill.register('modules/clipboard', QuillPasteSmart);
