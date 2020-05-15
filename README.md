@@ -81,15 +81,6 @@ It is possible to use this module by including it though a `<script>` tag. Here 
         Quill.register('modules/clipboard', QuillPasteSmart);
         var quill = new Quill('#editor', {
             theme: 'snow',
-            modules: {
-                clipboard: {
-                    allowed: {
-                        tags: ['a', 'b', 'strong', 'u', 's', 'i', 'p', 'br', 'ul', 'ol', 'li', 'span'],
-                        attributes: ['href', 'rel', 'target', 'class']
-                    },
-                    keepSelection: true,
-                },
-            },
         });
     </script>
 </body>
