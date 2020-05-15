@@ -23,9 +23,9 @@ To tell Quill to use this plugin instead of its own clipboard module you need to
 
 ```javascript
 import Quill from 'quill';
-import PasteSmart from 'quill-paste-smart';
+import QuillPasteSmart from 'quill-paste-smart';
 
-Quill.register('modules/clipboard', PasteSmart, true);
+Quill.register('modules/clipboard', QuillPasteSmart, true);
 
 ```
 
@@ -54,6 +54,48 @@ const options = {
 };
 new Quill('#editor', options);
 ```
+
+
+<br>
+
+### CommonJS
+
+It is possible to use this module by including it though a `<script>` tag. Here is a full example.
+
+```html
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title></title>
+	<link href="https://unpkg.com/quill@latest/dist/quill.snow.css" rel="stylesheet">
+</head>
+<body>
+	<div id="editor"></div>
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/quill/2.0.0-dev.4/quill.min.js"></script>
+	<script src="./dist/index.js"></script>
+
+	<script>
+		Quill.register('modules/clipboard', QuillPasteSmart);
+		var quill = new Quill('#editor', {
+			theme: 'snow',
+			modules: {
+				clipboard: {
+					allowed: {
+						tags: ['a', 'b', 'strong', 'u', 's', 'i', 'p', 'br', 'ul', 'ol', 'li', 'span'],
+						attributes: ['href', 'rel', 'target', 'class']
+					},
+					keepSelection: true,
+				},
+			},
+		});
+	</script>
+</body>
+</html>
+```
+
 
 <br>
 
