@@ -68,7 +68,7 @@ It is possible to use this module by including it though a `<script>` tag. Here 
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title></title>
+    <title>Quill Paste Smart</title>
     <link href="https://unpkg.com/quill@latest/dist/quill.snow.css" rel="stylesheet">
 </head>
 <body>
