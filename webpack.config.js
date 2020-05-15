@@ -13,7 +13,7 @@ const config = {
         umdNamedDefine: true,
     },
     target: 'web',
-    mode: 'development',
+    mode: 'production',
     externals: {
         quill: {
             commonjs: 'quill',
