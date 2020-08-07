@@ -1,12 +1,4 @@
 let Quill = window.Quill;
-
-try {
-    const ReactQuill = require('react-quill');
-    if (ReactQuill && !Quill) Quill = ReactQuill.Quill;
-} catch (error) {
-    // react-quill has not been installed
-}
-
 if (!Quill) Quill = require('quill');
 
 const DOMPurify = require('dompurify');
