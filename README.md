@@ -19,14 +19,11 @@ npm i quill-paste-smart
 
 ### Usage
 
-To tell Quill to use this plugin instead of its own clipboard module you need to register it.
+Since this plugin registers itself, it is sufficient to just import it.
 
 ```javascript
 import Quill from 'quill';
-import QuillPasteSmart from 'quill-paste-smart';
-
-Quill.register('modules/clipboard', QuillPasteSmart, true);
-
+import 'quill-paste-smart';
 ```
 
 <br>
