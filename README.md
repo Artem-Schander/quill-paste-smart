@@ -28,6 +28,19 @@ import 'quill-paste-smart';
 
 <br>
 
+### Demos
+
+* Vanilla JS
+    * [ES6](https://il56g.csb.app/)
+    * [CommonJS](https://8rw3l.csb.app/)
+* Vue
+    * [surmon-china/vue-quill-editor](https://bk79f.csb.app/)
+* React
+    * [zenoamaro/react-quill](https://3di00.csb.app/)
+    * [gtgalone/react-quilljs](https://h3tut.csb.app/)
+
+<br>
+
 ### Configuration
 
 Out of the box this plugin will remove all HTML tags and attributes that are not available in the toolbar formats.  
