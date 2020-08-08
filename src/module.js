@@ -1,15 +1,10 @@
-let Quill = window.Quill;
-if (!Quill) Quill = require('quill');
+import Quill from 'quill';
+import DOMPurify from 'dompurify';
 
-const DOMPurify = require('dompurify');
-
-const Delta = Quill.import('delta');
 const Clipboard = Quill.import('modules/clipboard');
+const Delta = Quill.import('delta');
 
 class QuillPasteSmart extends Clipboard {
-    static keepSelection = false;
-    static allowed = [];
-
     constructor(quill, options) {
         super(quill, options);
 
@@ -202,5 +197,5 @@ class QuillPasteSmart extends Clipboard {
     }
 }
 
-// Quill.register('modules/clipboard', QuillPasteSmart, true);
+Quill.register('modules/clipboard', QuillPasteSmart, true);
 export default QuillPasteSmart;

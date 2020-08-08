@@ -75,12 +75,14 @@ It is possible to use this module by including it though a `<script>` tag. Here 
     <div id="editor"></div>
 
     <script src="https://unpkg.com/quill@latest/dist/quill.js"></script>
-    <script src="https://unpkg.com/quill-paste-smart@latest/dist/index.js"></script>
+    <script src="https://unpkg.com/quill-paste-smart@latest/dist/quill-paste-smart.js"></script>
 
     <script>
-        Quill.register('modules/clipboard', QuillPasteSmart);
         var quill = new Quill('#editor', {
             theme: 'snow',
+            modules: {
+                toolbar: ['bold', 'italic', 'underline', 'link'],
+            }
         });
     </script>
 </body>

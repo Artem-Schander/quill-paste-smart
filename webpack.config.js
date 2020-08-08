@@ -1,16 +1,12 @@
 const path = require('path');
 
 const config = {
-    entry: {
-        index: './src/index.js',
-        module: './src/module.js',
-    },
+    entry: './src/module.js',
     output: {
-        filename: '[name].js',
+        filename: 'quill-paste-smart.js',
         path: path.resolve(__dirname, 'dist'),
         library: 'QuillPasteSmart',
         libraryTarget: 'umd',
-        umdNamedDefine: true,
     },
     target: 'web',
     mode: 'production',
@@ -32,7 +28,6 @@ const config = {
                     loader: 'babel-loader',
                     options: {
                         presets: [['@babel/preset-env', { modules: false }]],
-                        plugins: ['@babel/plugin-proposal-class-properties'],
                     },
                 },
             },
