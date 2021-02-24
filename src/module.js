@@ -10,6 +10,7 @@ class QuillPasteSmart extends Clipboard {
 
         this.allowed = options.allowed;
         this.keepSelection = options.keepSelection;
+        this.magicPasteLinks = options.magicPasteLinks;
     }
 
     onPaste(e) {
@@ -26,6 +27,11 @@ class QuillPasteSmart extends Clipboard {
             const allowed = this.getAllowed();
             content = DOMPurify.sanitize(html, allowed);
             delta = delta.concat(this.convert(content));
+        } else if (this.isURL(text) && this.magicPasteLinks) {
+            const selectedText = this.quill.getText(range.index, range.length);
+            delta = delta.insert(selectedText, {
+                link: text,
+            });
         } else {
             delta = delta.insert(content);
         }
@@ -194,6 +200,16 @@ class QuillPasteSmart extends Clipboard {
         }
 
         return tidy;
+    }
+
+    isURL(str) {
+        const pattern = new RegExp('^(https?:\\/\\/)?'+ // protocol
+          '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|'+ // domain name
+          '((\\d{1,3}\\.){3}\\d{1,3}))'+ // OR ip (v4) address
+          '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*'+ // port and path
+          '(\\?[;&a-z\\d%_.~+=-]*)?'+ // query string
+          '(\\#[-a-z\\d_]*)?$','i'); // fragment locator
+        return !!pattern.test(str);
     }
 }
 
