@@ -27,9 +27,9 @@ class QuillPasteSmart extends Clipboard {
             const allowed = this.getAllowed();
             content = DOMPurify.sanitize(html, allowed);
             delta = delta.concat(this.convert(content));
-        } else if (this.isURL(text) && this.magicPasteLinks) {
-            const selectedText = this.quill.getText(range.index, range.length);
-            delta = delta.insert(selectedText, {
+        } else if (this.isURL(text) && range.length > 0 && this.magicPasteLinks) {
+            content = this.quill.getText(range.index, range.length);
+            delta = delta.insert(content, {
                 link: text,
             });
         } else {
