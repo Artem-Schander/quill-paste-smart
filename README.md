@@ -66,6 +66,14 @@ const options = {
 new Quill('#editor', options);
 ```
 
+#### Configuration Object
+
+| key | valid values | default value | type | description |
+|:------| :------: | :------: | :------: |:------|
+| allowed.tags | HTML tags | `undefined` | `Array<string>` | Here you can define any HTML tag that should be allowed to be pasted. If this setting is not specified, allowed tags are determined by possible formats in the toolbar |
+| allowed.attributes | HTML attributes | `undefined` | `Array<string>` | Here you can define any HTML attributes that should be allowed to be pasted. If this setting is not specified, allowed attributes are determined by possible formats in the toolbar |
+| keepSelection | `true` `false` | `false` | `Boolean` | If this setting is set to `true` the pasted content will be selected after pasting it. Otherwise the cursor will be placed right after the pasted content |
+| magicPasteLinks | `true` `false` | `false` | `Boolean` | If this setting is set to `true` pasted links will be converted to an `a` tag. Note: This only works if there is nothing pasted except a valid link. |
 
 <br>
 
