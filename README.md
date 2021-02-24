@@ -51,7 +51,7 @@ A valid configuration could look like this:
 
 ```javascript
 const options = {
-    theme: 'snow'
+    theme: 'snow',
     modules: {
         clipboard: {
             allowed: {
@@ -59,6 +59,7 @@ const options = {
                 attributes: ['href', 'rel', 'target', 'class']
             },
             keepSelection: true,
+            magicPasteLinks: true,
         },
     },
 };
