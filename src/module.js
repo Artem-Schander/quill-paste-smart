@@ -50,8 +50,8 @@ class QuillPasteSmart extends Clipboard {
     getAllowed() {
         let tidy = {};
 
-        if (this.allowed && this.allowed.tags) tidy.ALLOWED_TAGS = this.allowed.tags;
-        if (this.allowed && this.allowed.attributes) tidy.ALLOWED_ATTR = this.allowed.attributes;
+        if (this?.allowed?.tags) tidy.ALLOWED_TAGS = this.allowed.tags;
+        if (this?.allowed?.attributes) tidy.ALLOWED_ATTR = this.allowed.attributes;
 
         if (tidy.ALLOWED_TAGS === undefined || tidy.ALLOWED_ATTR === undefined) {
             let undefinedTags = false;
@@ -67,7 +67,7 @@ class QuillPasteSmart extends Clipboard {
             }
 
             const toolbar = this.quill.getModule('toolbar');
-            toolbar.controls.forEach((control) => {
+            toolbar?.controls?.forEach((control) => {
                 switch (control[0]) {
                     case 'bold':
                         if (undefinedTags) {
