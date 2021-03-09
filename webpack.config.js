@@ -8,6 +8,9 @@ const config = {
         library: 'QuillPasteSmart',
         libraryTarget: 'umd',
     },
+    optimization: {
+        minimize: true,
+    },
     target: 'web',
     mode: 'production',
     externals: {
