@@ -72,7 +72,7 @@ const options = {
 new Quill('#editor', options);
 ```
 
-> :raised_hand: You don't need a custom configuration.  
+> :raised_hand: **Probably you don't need a custom configuration.**  
 > You could stick with the default settings by completely omit the `clipboard` object in your quill options.
 
 
