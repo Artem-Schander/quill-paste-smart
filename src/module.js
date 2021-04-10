@@ -10,7 +10,9 @@ class QuillPasteSmart extends Clipboard {
 
         this.allowed = options.allowed;
         this.keepSelection = options.keepSelection;
+        this.substituteBlockElements = options.substituteBlockElements;
         this.magicPasteLinks = options.magicPasteLinks;
+        this.hooks = options.hooks;
     }
 
     onPaste(e) {
@@ -26,6 +28,37 @@ class QuillPasteSmart extends Clipboard {
 
         let content = text;
         if (html) {
+            if (this.substituteBlockElements !== false) this.substitute();
+
+            // add hooks to accessible setttings
+            if (typeof this.hooks.beforeSanitizeElements === 'function') {
+                DOMPurify.addHook('beforeSanitizeElements', this.hooks.beforeSanitizeElements);
+            }
+            if (typeof this.hooks.uponSanitizeElement === 'function') {
+                DOMPurify.addHook('uponSanitizeElement', this.hooks.uponSanitizeElement);
+            }
+            if (typeof this.hooks.afterSanitizeElements === 'function') {
+                DOMPurify.addHook('afterSanitizeElements', this.hooks.afterSanitizeElements);
+            }
+            if (typeof this.hooks.beforeSanitizeAttributes === 'function') {
+                DOMPurify.addHook('beforeSanitizeAttributes', this.hooks.beforeSanitizeAttributes);
+            }
+            if (typeof this.hooks.uponSanitizeAttribute === 'function') {
+                DOMPurify.addHook('uponSanitizeAttribute', this.hooks.uponSanitizeAttribute);
+            }
+            if (typeof this.hooks.afterSanitizeAttributes === 'function') {
+                DOMPurify.addHook('afterSanitizeAttributes', this.hooks.afterSanitizeAttributes);
+            }
+            if (typeof this.hooks.beforeSanitizeShadowDOM === 'function') {
+                DOMPurify.addHook('beforeSanitizeShadowDOM', this.hooks.beforeSanitizeShadowDOM);
+            }
+            if (typeof this.hooks.uponSanitizeShadowNode === 'function') {
+                DOMPurify.addHook('uponSanitizeShadowNode', this.hooks.uponSanitizeShadowNode);
+            }
+            if (typeof this.hooks.afterSanitizeShadowDOM === 'function') {
+                DOMPurify.addHook('afterSanitizeShadowDOM', this.hooks.afterSanitizeShadowDOM);
+            }
+
             content = DOMPurify.sanitize(html, allowed);
             delta = delta.concat(this.convert(content));
         } else if (allowed.ALLOWED_TAGS.includes('a') && this.isURL(text) && range.length > 0 && this.magicPasteLinks) {
@@ -45,13 +78,14 @@ class QuillPasteSmart extends Clipboard {
         else this.quill.setSelection(range.index + delta.length(), Quill.sources.SILENT);
 
         this.quill.scrollIntoView();
+        DOMPurify.removeAllHooks();
     }
 
     getAllowed() {
         let tidy = {};
 
-        if (this?.allowed?.tags) tidy.ALLOWED_TAGS = this.allowed.tags;
-        if (this?.allowed?.attributes) tidy.ALLOWED_ATTR = this.allowed.attributes;
+        if (this.allowed?.tags) tidy.ALLOWED_TAGS = this.allowed.tags;
+        if (this.allowed?.attributes) tidy.ALLOWED_ATTR = this.allowed.attributes;
 
         if (tidy.ALLOWED_TAGS === undefined || tidy.ALLOWED_ATTR === undefined) {
             let undefinedTags = false;
@@ -201,6 +235,92 @@ class QuillPasteSmart extends Clipboard {
         }
 
         return tidy;
+    }
+
+    // replace forbidden block elements with a p tag
+    substitute() {
+        const replaceWithTag = (element, tag) => {
+            let replacement = document.createElement(tag);
+            for (let name of element.getAttributeNames()) {
+                replacement.setAttribute(name, element.getAttribute(name));
+            }
+            replacement.innerHTML = element.innerHTML;
+            element.replaceWith(replacement);
+            return replacement;
+        };
+
+        // fix quill bug #3333
+        // span content placed into the next tag
+        DOMPurify.addHook('beforeSanitizeElements', (node) => {
+            // console.log('>>', node, data, config);
+            const tagName = node?.tagName.toLowerCase();
+            if (tagName === 'span') {
+                node.innerHTML = `${node.innerHTML} `;
+            }
+        });
+
+        let substitution;
+        DOMPurify.addHook('uponSanitizeElement', (node, data, config) => {
+            const headings = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'];
+            const blockElements = [
+                'p',
+                'div',
+                'section',
+                'article',
+                'fieldset',
+                'address',
+                'aside',
+                'blockquote',
+                'canvas',
+                'dl',
+                'figcaption',
+                'figure',
+                'footer',
+                'form',
+                'header',
+                'main',
+                'nav',
+                'noscript',
+                'ol',
+                'pre',
+                'table',
+                'tfoot',
+                'ul',
+                'video',
+            ];
+            const newLineElements = ['li', 'dt', 'dd', 'hr'];
+
+            // check if current tag is a heading
+            // - is it supported?
+            // - no? - replace it with <p> and <b>
+            // -----------------
+            // check if current tag is a block element
+            // - is it supported?
+            // - no? - replace it with <p>
+            // -----------------
+            // check if current tag is a new line element
+            // - is it supported?
+            // - no? - remove the tag and append a <br>
+
+            // find possible substitution
+            let i = 0;
+            while (!substitution && i < 3) {
+                if (config.ALLOWED_TAGS.includes(blockElements[i])) substitution = blockElements[i];
+                ++i;
+            }
+
+            if (node.tagName && substitution && !config.ALLOWED_TAGS.includes(node.tagName.toLowerCase())) {
+                const tagName = node.tagName.toLowerCase();
+                if (headings.includes(tagName)) {
+                    node.innerHTML = `<b>${node.innerHTML}</b>`;
+                    replaceWithTag(node, substitution);
+                } else if (blockElements.includes(tagName)) {
+                    replaceWithTag(node, substitution);
+                } else if (newLineElements.includes(tagName)) {
+                    node.innerHTML = `${node.innerHTML}<br>`;
+                }
+            }
+        });
     }
 
     isURL(str) {

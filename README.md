@@ -59,12 +59,22 @@ const options = {
                 attributes: ['href', 'rel', 'target', 'class']
             },
             keepSelection: true,
+            substituteBlockElements: true,
             magicPasteLinks: true,
+            hooks: {
+                uponSanitizeElement(node, data, config) {
+                    console.log(node);
+                },
+            },
         },
     },
 };
 new Quill('#editor', options);
 ```
+
+> :raised_hand: You don't need a custom configuration.  
+> You could stick with the default settings by completely omit the `clipboard` object in your quill options.
+
 
 #### Configuration Object
 
@@ -72,8 +82,10 @@ new Quill('#editor', options);
 |:------| :------: | :------: | :------: |:------|
 | allowed.tags | HTML tags | `undefined` | `Array<string>` | Here you can define any HTML tag that should be allowed to be pasted. If this setting is not specified, allowed tags are determined by possible formats in the toolbar |
 | allowed.attributes | HTML attributes | `undefined` | `Array<string>` | Here you can define any HTML attributes that should be allowed to be pasted. If this setting is not specified, allowed attributes are determined by possible formats in the toolbar |
+| substituteBlockElements | `true` `false` | `true` | `Boolean` | If this setting is set to `true` all forbidden block type tags will be substituted by one of the allowed tags `p`/`div`/`section` |
 | keepSelection | `true` `false` | `false` | `Boolean` | If this setting is set to `true` the pasted content will be selected after pasting it. Otherwise the cursor will be placed right after the pasted content |
 | magicPasteLinks | `true` `false` | `false` | `Boolean` | If this setting is set to `true` pasted links over selected text will be converted to an `a` tag. Example: If you select the word `foo` and paste the link `https://foo.bar/` the result will be `<a href="https://foo.bar/">foo</a>`. Note: This only works if there is nothing pasted except a valid link. |
+| hooks | [DOMPurify Hooks](https://github.com/cure53/DOMPurify#hooks) | `undefined` | `Array<function>` | Here you can define any of the DOMPurify hooks. This can be handy if you need to cusomtize the HTML sanitizer. For more information see the [hook demos](https://github.com/cure53/DOMPurify/tree/main/demos) from DOMPurify.<br>**BE AWARE**<br>Here you can mess up things. E.g. You could create an infinite loop by adding not allowed tags to the node. |
 
 <br>
 
