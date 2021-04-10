@@ -252,9 +252,7 @@ class QuillPasteSmart extends Clipboard {
         // fix quill bug #3333
         // span content placed into the next tag
         DOMPurify.addHook('beforeSanitizeElements', (node) => {
-            // console.log('>>', node, data, config);
-            const tagName = node?.tagName.toLowerCase();
-            if (tagName === 'span') {
+            if (node.tagName && node.tagName.toLowerCase() === 'span') {
                 node.innerHTML = `${node.innerHTML} `;
             }
         });
