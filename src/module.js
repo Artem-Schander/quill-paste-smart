@@ -239,16 +239,6 @@ class QuillPasteSmart extends Clipboard {
 
     // replace forbidden block elements with a p tag
     substitute() {
-        const replaceWithTag = (element, tag) => {
-            let replacement = document.createElement(tag);
-            for (let name of element.getAttributeNames()) {
-                replacement.setAttribute(name, element.getAttribute(name));
-            }
-            replacement.innerHTML = element.innerHTML;
-            element.replaceWith(replacement);
-            return replacement;
-        };
-
         // fix quill bug #3333
         // span content placed into the next tag
         DOMPurify.addHook('beforeSanitizeElements', (node) => {
@@ -307,13 +297,12 @@ class QuillPasteSmart extends Clipboard {
                 ++i;
             }
 
-            if (node.tagName && substitution && !config.ALLOWED_TAGS.includes(node.tagName.toLowerCase())) {
+            if (substitution && node.tagName && !config.ALLOWED_TAGS.includes(node.tagName.toLowerCase())) {
                 const tagName = node.tagName.toLowerCase();
                 if (headings.includes(tagName)) {
-                    node.innerHTML = `<b>${node.innerHTML}</b>`;
-                    replaceWithTag(node, substitution);
+                    node.innerHTML = `<${substitution}><b>${node.innerHTML}</b></${substitution}>`;
                 } else if (blockElements.includes(tagName)) {
-                    replaceWithTag(node, substitution);
+                    node.innerHTML = `<${substitution}>${node.innerHTML}</${substitution}>`;
                 } else if (newLineElements.includes(tagName)) {
                     node.innerHTML = `${node.innerHTML}<br>`;
                 }
