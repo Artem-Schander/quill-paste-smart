@@ -31,31 +31,31 @@ class QuillPasteSmart extends Clipboard {
             if (this.substituteBlockElements !== false) this.substitute();
 
             // add hooks to accessible setttings
-            if (typeof this.hooks.beforeSanitizeElements === 'function') {
+            if (typeof this.hooks?.beforeSanitizeElements === 'function') {
                 DOMPurify.addHook('beforeSanitizeElements', this.hooks.beforeSanitizeElements);
             }
-            if (typeof this.hooks.uponSanitizeElement === 'function') {
+            if (typeof this.hooks?.uponSanitizeElement === 'function') {
                 DOMPurify.addHook('uponSanitizeElement', this.hooks.uponSanitizeElement);
             }
-            if (typeof this.hooks.afterSanitizeElements === 'function') {
+            if (typeof this.hooks?.afterSanitizeElements === 'function') {
                 DOMPurify.addHook('afterSanitizeElements', this.hooks.afterSanitizeElements);
             }
-            if (typeof this.hooks.beforeSanitizeAttributes === 'function') {
+            if (typeof this.hooks?.beforeSanitizeAttributes === 'function') {
                 DOMPurify.addHook('beforeSanitizeAttributes', this.hooks.beforeSanitizeAttributes);
             }
-            if (typeof this.hooks.uponSanitizeAttribute === 'function') {
+            if (typeof this.hooks?.uponSanitizeAttribute === 'function') {
                 DOMPurify.addHook('uponSanitizeAttribute', this.hooks.uponSanitizeAttribute);
             }
-            if (typeof this.hooks.afterSanitizeAttributes === 'function') {
+            if (typeof this.hooks?.afterSanitizeAttributes === 'function') {
                 DOMPurify.addHook('afterSanitizeAttributes', this.hooks.afterSanitizeAttributes);
             }
-            if (typeof this.hooks.beforeSanitizeShadowDOM === 'function') {
+            if (typeof this.hooks?.beforeSanitizeShadowDOM === 'function') {
                 DOMPurify.addHook('beforeSanitizeShadowDOM', this.hooks.beforeSanitizeShadowDOM);
             }
-            if (typeof this.hooks.uponSanitizeShadowNode === 'function') {
+            if (typeof this.hooks?.uponSanitizeShadowNode === 'function') {
                 DOMPurify.addHook('uponSanitizeShadowNode', this.hooks.uponSanitizeShadowNode);
             }
-            if (typeof this.hooks.afterSanitizeShadowDOM === 'function') {
+            if (typeof this.hooks?.afterSanitizeShadowDOM === 'function') {
                 DOMPurify.addHook('afterSanitizeShadowDOM', this.hooks.afterSanitizeShadowDOM);
             }
 
