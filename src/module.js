@@ -20,16 +20,14 @@ class QuillPasteSmart extends Clipboard {
         const range = this.quill.getSelection();
 
         const text = e.clipboardData.getData('text/plain');
-        const html = e.clipboardData.getData('text/html');
+        let html = e.clipboardData.getData('text/html');
 
         let delta = new Delta().retain(range.index).delete(range.length);
 
-        const allowed = this.getAllowed();
+        const DOMPurifyOptions = this.getDOMPurifyOptions();
 
         let content = text;
         if (html) {
-            if (this.substituteBlockElements !== false) this.substitute();
-
             // add hooks to accessible setttings
             if (typeof this.hooks?.beforeSanitizeElements === 'function') {
                 DOMPurify.addHook('beforeSanitizeElements', this.hooks.beforeSanitizeElements);
@@ -59,9 +57,20 @@ class QuillPasteSmart extends Clipboard {
                 DOMPurify.addHook('afterSanitizeShadowDOM', this.hooks.afterSanitizeShadowDOM);
             }
 
-            content = DOMPurify.sanitize(html, allowed);
+            if (this.substituteBlockElements !== false) {
+                html = this.substitute(html, DOMPurifyOptions);
+                content = html.innerHTML;
+            } else {
+                content = DOMPurify.sanitize(html, DOMPurifyOptions);
+            }
+
             delta = delta.concat(this.convert(content));
-        } else if (allowed.ALLOWED_TAGS.includes('a') && this.isURL(text) && range.length > 0 && this.magicPasteLinks) {
+        } else if (
+            DOMPurifyOptions.ALLOWED_TAGS.includes('a') &&
+            this.isURL(text) &&
+            range.length > 0 &&
+            this.magicPasteLinks
+        ) {
             content = this.quill.getText(range.index, range.length);
             delta = delta.insert(content, {
                 link: text,
@@ -81,7 +90,7 @@ class QuillPasteSmart extends Clipboard {
         DOMPurify.removeAllHooks();
     }
 
-    getAllowed() {
+    getDOMPurifyOptions() {
         let tidy = {};
 
         if (this.allowed?.tags) tidy.ALLOWED_TAGS = this.allowed.tags;
@@ -238,46 +247,39 @@ class QuillPasteSmart extends Clipboard {
     }
 
     // replace forbidden block elements with a p tag
-    substitute() {
-        // fix quill bug #3333
-        // span content placed into the next tag
-        DOMPurify.addHook('beforeSanitizeElements', (node) => {
-            if (node.tagName && node.tagName.toLowerCase() === 'span') {
-                node.innerHTML = `${node.innerHTML} `;
-            }
-        });
-
+    substitute(html, DOMPurifyOptions) {
         let substitution;
-        DOMPurify.addHook('uponSanitizeElement', (node, data, config) => {
-            const headings = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'];
-            const blockElements = [
-                'p',
-                'div',
-                'section',
-                'article',
-                'fieldset',
-                'address',
-                'aside',
-                'blockquote',
-                'canvas',
-                'dl',
-                'figcaption',
-                'figure',
-                'footer',
-                'form',
-                'header',
-                'main',
-                'nav',
-                'noscript',
-                'ol',
-                'pre',
-                'table',
-                'tfoot',
-                'ul',
-                'video',
-            ];
-            const newLineElements = ['li', 'dt', 'dd', 'hr'];
 
+        const headings = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'];
+        const blockElements = [
+            'p',
+            'div',
+            'section',
+            'article',
+            'fieldset',
+            'address',
+            'aside',
+            'blockquote',
+            'canvas',
+            'dl',
+            'figcaption',
+            'figure',
+            'footer',
+            'form',
+            'header',
+            'main',
+            'nav',
+            'noscript',
+            'ol',
+            'pre',
+            'table',
+            'tfoot',
+            'ul',
+            'video',
+        ];
+        const newLineElements = ['li', 'dt', 'dd', 'hr'];
+
+        DOMPurify.addHook('uponSanitizeElement', (node, data, config) => {
             // check if current tag is a heading
             // - is it supported?
             // - no? - replace it with <p> and <b>
@@ -293,11 +295,11 @@ class QuillPasteSmart extends Clipboard {
             // find possible substitution
             let i = 0;
             while (!substitution && i < 3) {
-                if (config.ALLOWED_TAGS.includes(blockElements[i])) substitution = blockElements[i];
+                if (DOMPurifyOptions.ALLOWED_TAGS.includes(blockElements[i])) substitution = blockElements[i];
                 ++i;
             }
 
-            if (substitution && node.tagName && !config.ALLOWED_TAGS.includes(node.tagName.toLowerCase())) {
+            if (substitution && node.tagName && !DOMPurifyOptions.ALLOWED_TAGS.includes(node.tagName.toLowerCase())) {
                 const tagName = node.tagName.toLowerCase();
                 if (headings.includes(tagName)) {
                     node.innerHTML = `<${substitution}><b>${node.innerHTML}</b></${substitution}>`;
@@ -308,6 +310,56 @@ class QuillPasteSmart extends Clipboard {
                 }
             }
         });
+
+        html = DOMPurify.sanitize(html, { ...DOMPurifyOptions, ...{ RETURN_DOM: true, WHOLE_DOCUMENT: false } });
+        DOMPurify.removeAllHooks();
+
+        // fix quill bug #3333
+        // span content placed into the next tag
+
+        let depth = 0;
+        const walkTheDOM = (node, func) => {
+            func(node, depth);
+            // node = node.firstChild;
+            if (depth <= 1) node = node.firstChild;
+            else node = undefined;
+            while (node) {
+                ++depth;
+                walkTheDOM(node, func);
+                node = node.nextSibling;
+            }
+            --depth;
+        };
+
+        let block;
+        const fixedDom = document.createElement('body');
+        walkTheDOM(html, (node, depth) => {
+            if (depth === 1) {
+                if (node.tagName && blockElements.includes(node.tagName.toLowerCase())) {
+                    if (block) block = undefined;
+                    const element = document.createElement(node.tagName.toLowerCase());
+                    element.innerHTML = node.innerHTML;
+                    fixedDom.appendChild(element);
+                } else {
+                    if (block === undefined) {
+                        block = document.createElement(substitution);
+                        fixedDom.appendChild(block);
+                    }
+
+                    if (node.tagName) {
+                        const element = document.createElement(node.tagName.toLowerCase());
+                        if (node.innerHTML) element.innerHTML = node.innerHTML;
+                        block.appendChild(element);
+                    } else {
+                        // plain text
+                        const element = document.createTextNode(node.textContent);
+                        block.appendChild(element);
+                    }
+                }
+            }
+        });
+
+        return fixedDom;
     }
 
     isURL(str) {
