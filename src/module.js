@@ -196,6 +196,11 @@ class QuillPasteSmart extends Clipboard {
                                 tidy.ALLOWED_TAGS.push('ol');
                             } else if (control[1].value === 'bullet') {
                                 tidy.ALLOWED_TAGS.push('ul');
+                            } else if (control[1].value === 'check') {
+                                tidy.ALLOWED_TAGS.push('ul');
+                                if (undefinedAttr) {
+                                    tidy.ALLOWED_ATTR.push('data-checked');
+                                }
                             }
                             tidy.ALLOWED_TAGS.push('li');
                         }
@@ -337,9 +342,7 @@ class QuillPasteSmart extends Clipboard {
             if (depth === 1) {
                 if (node.tagName && blockElements.includes(node.tagName.toLowerCase())) {
                     if (block) block = undefined;
-                    const element = document.createElement(node.tagName.toLowerCase());
-                    element.innerHTML = node.innerHTML;
-                    fixedDom.appendChild(element);
+                    fixedDom.appendChild(this.cloneTagNode(node, DOMPurifyOptions));
                 } else {
                     if (block === undefined) {
                         block = document.createElement(substitution);
@@ -347,9 +350,7 @@ class QuillPasteSmart extends Clipboard {
                     }
 
                     if (node.tagName) {
-                        const element = document.createElement(node.tagName.toLowerCase());
-                        if (node.innerHTML) element.innerHTML = node.innerHTML;
-                        block.appendChild(element);
+                        block.appendChild(this.cloneTagNode(node, DOMPurifyOptions));
                     } else {
                         // plain text
                         const element = document.createTextNode(node.textContent);
@@ -360,6 +361,17 @@ class QuillPasteSmart extends Clipboard {
         });
 
         return fixedDom;
+    }
+
+    cloneTagNode(node, DOMPurifyOptions) {
+        const element = document.createElement(node.tagName.toLowerCase());
+        if (node.innerHTML) element.innerHTML = node.innerHTML;
+        DOMPurifyOptions.ALLOWED_ATTR.forEach(attr => {
+            if (node.hasAttribute(attr)) {
+                element.setAttribute(attr, node.getAttribute(attr));
+            }
+        });
+        return element;
     }
 
     isURL(str) {
