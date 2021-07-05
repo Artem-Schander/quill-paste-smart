@@ -19,8 +19,17 @@ class QuillPasteSmart extends Clipboard {
         e.preventDefault();
         const range = this.quill.getSelection();
 
-        const text = e.clipboardData.getData('text/plain');
-        let html = e.clipboardData.getData('text/html');
+        let text;
+        let html;
+
+        if ((!e.clipboardData || !e.clipboardData.getData) &&
+           (window.clipboardData && window.clipboardData.getData)) {
+            // compatibility with older IE versions
+            text = window.clipboardData.getData('Text');
+        } else {
+            text = e.clipboardData.getData('text/plain');
+            html = e.clipboardData.getData('text/html');
+        }
 
         let delta = new Delta().retain(range.index).delete(range.length);
 
