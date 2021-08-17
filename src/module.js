@@ -21,14 +21,17 @@ class QuillPasteSmart extends Clipboard {
 
         let text;
         let html;
+        let file;
 
         if ((!e.clipboardData || !e.clipboardData.getData) &&
            (window.clipboardData && window.clipboardData.getData)) {
             // compatibility with older IE versions
             text = window.clipboardData.getData('Text');
+            file = window.clipboardData.items[0];
         } else {
             text = e.clipboardData.getData('text/plain');
             html = e.clipboardData.getData('text/html');
+            file = e.clipboardData.items[0];
         }
 
         let delta = new Delta().retain(range.index).delete(range.length);
@@ -84,6 +87,15 @@ class QuillPasteSmart extends Clipboard {
             delta = delta.insert(content, {
                 link: text,
             });
+        } else if (DOMPurifyOptions.ALLOWED_TAGS.includes('img') && file && file.kind === 'file' && file.type.match(/^image\//i)) {
+            const image = file.getAsFile()
+            const reader = new FileReader()
+            reader.onload = (e) => {
+                this.quill.insertEmbed(range.index, 'image', e.target.result)
+                // if required, manually update the selection after the file loads
+                if (!this.keepSelection) this.quill.setSelection(range.index + 1)
+            }
+            reader.readAsDataURL(image)
         } else {
             delta = delta.insert(content);
         }
@@ -94,8 +106,7 @@ class QuillPasteSmart extends Clipboard {
         delta = this.convert(content);
         if (this.keepSelection) this.quill.setSelection(range.index, delta.length(), Quill.sources.SILENT);
         else this.quill.setSelection(range.index + delta.length(), Quill.sources.SILENT);
-
-        this.quill.scrollIntoView();
+        this.quill.container.scrollIntoView();
         DOMPurify.removeAllHooks();
     }
 
