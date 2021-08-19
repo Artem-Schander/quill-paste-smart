@@ -27,7 +27,6 @@ class QuillPasteSmart extends Clipboard {
            (window.clipboardData && window.clipboardData.getData)) {
             // compatibility with older IE versions
             text = window.clipboardData.getData('Text');
-            file = window.clipboardData.items[0];
         } else {
             text = e.clipboardData.getData('text/plain');
             html = e.clipboardData.getData('text/html');
