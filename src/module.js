@@ -31,7 +31,7 @@ class QuillPasteSmart extends Clipboard {
         } else {
             text = e.clipboardData.getData('text/plain');
             html = e.clipboardData.getData('text/html');
-            file = e.clipboardData.items[0];
+            file = e.clipboardData?.items?.[0];
         }
 
         let delta = new Delta().retain(range.index).delete(range.length);
