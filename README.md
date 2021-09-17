@@ -1,7 +1,7 @@
 # Quill Paste Smart
 
 [![npm](https://img.shields.io/npm/v/quill-paste-smart?style=for-the-badge)](https://www.npmjs.com/package/quill-paste-smart?activeTab=versions)
-[![npm bundle size](https://img.shields.io/bundlephobia/minzip/quill-paste-smart?style=for-the-badge)](https://bundlephobia.com/package/quill-paste-smart)
+[![npm bundle size](https://img.shields.io/bundlephobia/minzip/quill-paste-smart?color=%237400da&style=for-the-badge)](https://bundlephobia.com/package/quill-paste-smart)
 [![npm](https://img.shields.io/npm/dm/quill-paste-smart?style=for-the-badge)](https://www.npmjs.com/package/quill-paste-smart)
 [![NPM](https://img.shields.io/npm/l/quill-paste-smart?style=for-the-badge)](https://github.com/Artem-Schander/quill-paste-smart/blob/master/LICENSE)
 
