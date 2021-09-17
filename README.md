@@ -1,5 +1,10 @@
 # Quill Paste Smart
 
+[![npm](https://img.shields.io/npm/v/quill-paste-smart?style=for-the-badge)](https://www.npmjs.com/package/quill-paste-smart?activeTab=versions)
+[![npm bundle size](https://img.shields.io/bundlephobia/minzip/quill-paste-smart?style=for-the-badge)](https://bundlephobia.com/package/quill-paste-smart)
+[![npm](https://img.shields.io/npm/dm/quill-paste-smart?style=for-the-badge)](https://www.npmjs.com/package/quill-paste-smart)
+[![NPM](https://img.shields.io/npm/l/quill-paste-smart?style=for-the-badge)](https://github.com/Artem-Schander/quill-paste-smart/blob/master/LICENSE)
+
 This plugin extends the default clipboard module of [Quill.js](https://github.com/quilljs/quill) to prevent users from pasting HTML that does not belong into the editor. To do so it looks into the toolbar configuration and decides which tags and attributes are allowed based on the possible formats.  
 However, you can also decide on your own, what is allowed.
 
