@@ -5,6 +5,32 @@ const Clipboard = Quill.import('modules/clipboard');
 const Delta = Quill.import('delta');
 
 class QuillPasteSmart extends Clipboard {
+  constructor(quill, options) {
+    super(quill, options);
+
+    this.allowed = options.allowed;
+    this.keepSelection = options.keepSelection;
+    this.substituteBlockElements = options.substituteBlockElements;
+    this.magicPasteLinks = options.magicPasteLinks;
+    this.hooks = options.hooks;
+  }
+
+  onPaste(e) {
+    e.preventDefault();
+    const range = this.quill.getSelection();
+
+    let text;
+    let html;
+    let file;
+
+    if ((!e.clipboardData || !e.clipboardData.getData) &&
+      (window.clipboardData && window.clipboardData.getData)) {
+      // compatibility with older IE versions
+      text = window.clipboardData.getData('Text');
+    } else {
+      text = e.clipboardData.getData('text/plain');
+      html = e.clipboardData.getData('text/html');
+      file = e.clipboardData?.items?.[0];
     }
 
     let delta = new Delta().retain(range.index).delete(range.length);
@@ -43,6 +69,7 @@ class QuillPasteSmart extends Clipboard {
       }
 
       if (this.substituteBlockElements !== false) {
+        // html = DOMPurify.sanitize(html, { ...DOMPurifyOptions, ...{ RETURN_DOM: true, WHOLE_DOCUMENT: false } });
         html = this.substitute(html, DOMPurifyOptions);
         content = html.innerHTML;
       } else {
