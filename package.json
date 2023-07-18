@@ -1,6 +1,6 @@
 {
-  "name": "quill-paste-smart",
-  "version": "1.4.9",
+  "name": "@ceros/quill-paste-smart",
+  "version": "1.5.0",
   "description": "Quill Extension to paste only supported HTML",
   "main": "dist/quill-paste-smart.js",
   "devDependencies": {
@@ -14,9 +14,12 @@
   "scripts": {
     "build": "webpack"
   },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Artem-Schander/quill-paste-smart.git"
+    "url": "git://github.com/ceros/quill-paste-smart.git"
   },
   "keywords": [
     "quill",
