@@ -114,8 +114,12 @@ class QuillPasteSmart extends Clipboard {
       this.magicPasteLinks
     ) {
       content = this.quill.getText(range.index, range.length);
+
+      // NOTE: add https:// to url if not contains
+      const link = !/^https?:\/\//i.test(text) ? `https://${text}` : text;
+
       delta = delta.insert(content, {
-        link: text,
+        link,
       });
     } else if (
       DOMPurifyOptions.ALLOWED_TAGS.includes("img") &&
@@ -448,7 +452,7 @@ class QuillPasteSmart extends Clipboard {
 
   isURL(str) {
     const pattern =
-      /^(?:(?:https?|ftp):\/\/)(?:\S+(?::\S*)?@)?(?:(?!10(?:\.\d{1,3}){3})(?!127(?:\.\d{1,3}){3})(?!169\.254(?:\.\d{1,3}){2})(?!192\.168(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]+-?)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]+-?)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,})))(?::\d{2,5})?(?:\/[^\s]*)?$/isu;
+      /(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})/gi;
     return !!pattern.test(str);
   }
 }
