@@ -37,8 +37,38 @@ class QuillPasteSmart extends Clipboard {
 
     const DOMPurifyOptions = this.getDOMPurifyOptions();
 
+    let plainText = false;
     let content = text;
-    if (html) {
+
+    if (
+      !html &&
+      DOMPurifyOptions.ALLOWED_TAGS.includes('a') &&
+      this.isURL(text) && range.length > 0 && this.magicPasteLinks
+    ) {
+      content = this.quill.getText(range.index, range.length);
+      delta = delta.insert(content, {
+        link: text,
+      });
+    } else if (
+      !html &&
+      DOMPurifyOptions.ALLOWED_TAGS.includes('img') &&
+      file && file.kind === 'file' && file.type.match(/^image\//i)
+    ) {
+      const image = file.getAsFile()
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        this.quill.insertEmbed(range.index, 'image', e.target.result)
+        // if required, manually update the selection after the file loads
+        if (!this.keepSelection) this.quill.setSelection(range.index + 1)
+      }
+      reader.readAsDataURL(image)
+    } else {
+
+      if (!html) {
+        plainText = true;
+        html = content;
+      }
+
       // add hooks to accessible setttings
       if (typeof this.hooks?.beforeSanitizeElements === 'function') {
         DOMPurify.addHook('beforeSanitizeElements', this.hooks.beforeSanitizeElements);
@@ -68,42 +98,28 @@ class QuillPasteSmart extends Clipboard {
         DOMPurify.addHook('afterSanitizeShadowDOM', this.hooks.afterSanitizeShadowDOM);
       }
 
-      if (this.substituteBlockElements !== false) {
-        // html = DOMPurify.sanitize(html, { ...DOMPurifyOptions, ...{ RETURN_DOM: true, WHOLE_DOCUMENT: false } });
-        html = this.substitute(html, DOMPurifyOptions);
-        content = html.innerHTML;
-      } else {
+      if (plainText) {
         content = DOMPurify.sanitize(html, DOMPurifyOptions);
+        delta = delta.insert(content);
+      } else {
+        if (this.substituteBlockElements !== false) {
+          // html = DOMPurify.sanitize(html, { ...DOMPurifyOptions, ...{ RETURN_DOM: true, WHOLE_DOCUMENT: false } });
+          html = this.substitute(html, DOMPurifyOptions);
+          content = html.innerHTML;
+        } else {
+          content = DOMPurify.sanitize(html, DOMPurifyOptions);
+        }
+        delta = delta.concat(this.convert(content));
       }
-
-      delta = delta.concat(this.convert(content));
-    } else if (
-      DOMPurifyOptions.ALLOWED_TAGS.includes('a') &&
-      this.isURL(text) &&
-      range.length > 0 &&
-      this.magicPasteLinks
-    ) {
-      content = this.quill.getText(range.index, range.length);
-      delta = delta.insert(content, {
-        link: text,
-      });
-    } else if (DOMPurifyOptions.ALLOWED_TAGS.includes('img') && file && file.kind === 'file' && file.type.match(/^image\//i)) {
-      const image = file.getAsFile()
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        this.quill.insertEmbed(range.index, 'image', e.target.result)
-        // if required, manually update the selection after the file loads
-        if (!this.keepSelection) this.quill.setSelection(range.index + 1)
-      }
-      reader.readAsDataURL(image)
-    } else {
-      delta = delta.insert(content);
     }
 
     this.quill.updateContents(delta, Quill.sources.USER);
 
-    // move cursor
-    delta = this.convert(content);
+    if (!plainText) {
+      // move cursor
+      delta = this.convert(content);
+    }
+
     if (this.keepSelection) this.quill.setSelection(range.index, delta.length(), Quill.sources.SILENT);
     else this.quill.setSelection(range.index + delta.length(), Quill.sources.SILENT);
     this.quill.scrollIntoView();
@@ -338,6 +354,15 @@ class QuillPasteSmart extends Clipboard {
     // fix quill bug #3333
     // span content placed into the next tag
 
+    const createElement = (node) => {
+      const element = document.createElement(node.tagName.toLowerCase());
+      const attributes = node.attributes;
+      if (attributes.length) {
+        Array.from(attributes).forEach(el => element.setAttribute(el.nodeName, el.value));
+      }
+      return element;
+    }
+
     let depth = 0;
     const walkTheDOM = (node, func) => {
       func(node, depth);
@@ -358,7 +383,8 @@ class QuillPasteSmart extends Clipboard {
       if (depth === 1) {
         if (node.tagName && blockElements.includes(node.tagName.toLowerCase())) {
           if (block) block = undefined;
-          const element = document.createElement(node.tagName.toLowerCase());
+          const element = createElement(node);
+
           element.innerHTML = node.innerHTML;
           fixedDom.appendChild(element);
         } else {
@@ -368,12 +394,7 @@ class QuillPasteSmart extends Clipboard {
           }
 
           if (node.tagName) {
-            const element = document.createElement(node.tagName.toLowerCase());
-
-            const attributes = node.attributes;
-            if (attributes.length) {
-              Array.from(attributes).forEach(el => element.setAttribute(el.nodeName, el.value));
-            }
+            const element = createElement(node);
 
             if (node.innerHTML) element.innerHTML = node.innerHTML;
             block.appendChild(element);
