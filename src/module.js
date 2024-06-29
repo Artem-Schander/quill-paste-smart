@@ -13,6 +13,7 @@ class QuillPasteSmart extends Clipboard {
     this.substituteBlockElements = options.substituteBlockElements;
     this.magicPasteLinks = options.magicPasteLinks;
     this.hooks = options.hooks;
+    this.handleImagePaste = options.handleImagePaste;
   }
 
   onPaste(e) {
@@ -55,13 +56,18 @@ class QuillPasteSmart extends Clipboard {
       file && file.kind === 'file' && file.type.match(/^image\//i)
     ) {
       const image = file.getAsFile()
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        this.quill.insertEmbed(range.index, 'image', e.target.result)
-        // if required, manually update the selection after the file loads
-        if (!this.keepSelection) this.quill.setSelection(range.index + 1)
+
+      if (this.handleImagePaste !== undefined) {
+        this.handleImagePaste(image);
+      } else {
+        const reader = new FileReader()
+        reader.onload = (e) => {
+          this.quill.insertEmbed(range.index, 'image', e.target.result)
+          // if required, manually update the selection after the file loads
+          if (!this.keepSelection) this.quill.setSelection(range.index + 1)
+        }
+        reader.readAsDataURL(image)
       }
-      reader.readAsDataURL(image)
     } else {
 
       if (!html) {
