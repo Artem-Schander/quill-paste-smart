@@ -16,24 +16,17 @@ class QuillPasteSmart extends Clipboard {
     this.handleImagePaste = options.handleImagePaste;
   }
 
-  onPaste(e) {
+  onCapturePaste(e) {
+    if (e.defaultPrevented || !this.quill.isEnabled()) return;
+
     e.preventDefault();
+
     const range = this.quill.getSelection();
+    if (range == null)  return;
 
-    let text;
-    let html;
-    let file;
-
-    if ((!e.clipboardData || !e.clipboardData.getData) &&
-      (window.clipboardData && window.clipboardData.getData)) {
-      // compatibility with older IE versions
-      text = window.clipboardData.getData('Text');
-    } else {
-      text = e.clipboardData.getData('text/plain');
-      html = e.clipboardData.getData('text/html');
-      file = e.clipboardData?.items?.[0];
-    }
-
+    let text = e.clipboardData?.getData('text/plain');
+    let html = e.clipboardData?.getData('text/html');
+    let file = e.clipboardData?.items?.[0];
     let delta = new Delta().retain(range.index).delete(range.length);
 
     const DOMPurifyOptions = this.getDOMPurifyOptions();
@@ -128,7 +121,7 @@ class QuillPasteSmart extends Clipboard {
 
     if (this.keepSelection) this.quill.setSelection(range.index, delta.length(), Quill.sources.SILENT);
     else this.quill.setSelection(range.index + delta.length(), Quill.sources.SILENT);
-    this.quill.scrollIntoView();
+    this.quill.scrollSelectionIntoView();
     DOMPurify.removeAllHooks();
   }
 
@@ -357,63 +350,7 @@ class QuillPasteSmart extends Clipboard {
     html = DOMPurify.sanitize(html, { ...DOMPurifyOptions, ...{ RETURN_DOM: true, WHOLE_DOCUMENT: false } });
     DOMPurify.removeAllHooks();
 
-    // fix quill bug #3333
-    // span content placed into the next tag
-
-    const createElement = (node) => {
-      const element = document.createElement(node.tagName.toLowerCase());
-      const attributes = node.attributes;
-      if (attributes.length) {
-        Array.from(attributes).forEach(el => element.setAttribute(el.nodeName, el.value));
-      }
-      return element;
-    }
-
-    let depth = 0;
-    const walkTheDOM = (node, func) => {
-      func(node, depth);
-      // node = node.firstChild;
-      if (depth <= 1) node = node.firstChild;
-      else node = undefined;
-      while (node) {
-        ++depth;
-        walkTheDOM(node, func);
-        node = node.nextSibling;
-      }
-      --depth;
-    };
-
-    let block;
-    const fixedDom = document.createElement('body');
-    walkTheDOM(html, (node, depth) => {
-      if (depth === 1) {
-        if (node.tagName && blockElements.includes(node.tagName.toLowerCase())) {
-          if (block) block = undefined;
-          const element = createElement(node);
-
-          element.innerHTML = node.innerHTML;
-          fixedDom.appendChild(element);
-        } else {
-          if (block === undefined) {
-            block = document.createElement(substitution);
-            fixedDom.appendChild(block);
-          }
-
-          if (node.tagName) {
-            const element = createElement(node);
-
-            if (node.innerHTML) element.innerHTML = node.innerHTML;
-            block.appendChild(element);
-          } else {
-            // plain text
-            const element = document.createTextNode(node.textContent);
-            block.appendChild(element);
-          }
-        }
-      }
-    });
-
-    return fixedDom;
+    return html;
   }
 
   isURL(str) {
