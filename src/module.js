@@ -108,7 +108,7 @@ class QuillPasteSmart extends Clipboard {
         } else {
           content = DOMPurify.sanitize(html, DOMPurifyOptions);
         }
-        delta = delta.concat(this.convert(content));
+        delta = delta.concat(this.convert({ html: content }));
       }
     }
 
@@ -116,7 +116,7 @@ class QuillPasteSmart extends Clipboard {
 
     if (!plainText) {
       // move cursor
-      delta = this.convert(content);
+      delta = this.convert({ html: content });
     }
 
     if (this.keepSelection) this.quill.setSelection(range.index, delta.length(), Quill.sources.SILENT);
