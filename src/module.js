@@ -14,6 +14,7 @@ class QuillPasteSmart extends Clipboard {
     this.magicPasteLinks = options.magicPasteLinks;
     this.hooks = options.hooks;
     this.handleImagePaste = options.handleImagePaste;
+    this.customButtons = options.customButtons;
   }
 
   onCapturePaste(e) {
