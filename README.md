@@ -81,7 +81,8 @@ const options = {
 
             handleImagePaste(image) {
                 console.log("Image file pasted", image);
-            }
+            },
+            removeConsecutiveSubstitutionTags: true
         },
     },
 };
@@ -107,7 +108,7 @@ new Quill('#editor', options);
 | magicPasteLinks           |                        `true` `false`                        |    `false`    |     `Boolean`     | If this setting is set to `true` pasted URLs over selected text will be converted to an `a` tag. Example: If you select the word `foo` and paste the URL `https://foo.bar/` the result will be `<a href="https://foo.bar/">foo</a>`. Note: This only works if there is nothing pasted except a valid URL.                                                    |
 | hooks                     | [DOMPurify Hooks](https://github.com/cure53/DOMPurify#hooks) |  `undefined`  | `Array<function>` | Here you can define any of the DOMPurify hooks. This can be handy if you need to cusomtize the HTML sanitizer. For more information see the [hook demos](https://github.com/cure53/DOMPurify/tree/main/demos) from DOMPurify.<br>**BE AWARE**<br>Here you can mess up things. E.g. You could create an infinite loop by adding not allowed tags to the node. |
 | handleImagePaste          |                      `function (File)`                       |  `undefined`  | `function (File)` | Here you can define custom behavior for handling images being pasted, you can use this to upload the image to a CDN rather than embedding                                                                                                                                                                                                                    |                                                                                                                                                                                                                  |
-
+| removeConsecutiveSubstitutionTags |                        `true` `false`                        |    `undefined`    |     `Boolean`     | If this setting is set to `true` the pasted content will have consecutive occurances of the chosen substitution element removed after pasting it. Otherwise the the pasted conntent will not be affected. Note this setting is in effect only when substituteBlockElements is not false. |
 <br>
 
 ### CommonJS

@@ -15,6 +15,7 @@ class QuillPasteSmart extends Clipboard {
     this.hooks = options.hooks;
     this.handleImagePaste = options.handleImagePaste;
     this.customButtons = options.customButtons;
+    this.removeConsecutiveSubstitutionTags = options.removeConsecutiveSubstitutionTags;
   }
 
   onCapturePaste(e) {
@@ -103,14 +104,16 @@ class QuillPasteSmart extends Clipboard {
         delta = delta.insert(content);
       } else {
         // Convert table headers to cells
-        if (DOMPurifyOptions.ALLOWED_TAGS.includes('table')) {
-          html = this.tableHeadersToCells(html);
-        }
+        html = this.tableHeadersToCells(html);
 
         if (this.substituteBlockElements !== false) {
+          let substitution;
           // html = DOMPurify.sanitize(html, { ...DOMPurifyOptions, ...{ RETURN_DOM: true, WHOLE_DOCUMENT: false } });
-          html = this.substitute(html, DOMPurifyOptions);
+          [html, substitution] = this.substitute(html, DOMPurifyOptions);
           content = html.innerHTML;
+          if (this.removeConsecutiveSubstitutionTags) {
+            content = this.collapseConsecutiveSubstitutionTags(content, substitution);
+          }
         } else {
           content = DOMPurify.sanitize(html, DOMPurifyOptions);
         }
@@ -129,6 +132,27 @@ class QuillPasteSmart extends Clipboard {
     else this.quill.setSelection(range.index + delta.length(), Quill.sources.SILENT);
     this.quill.scrollSelectionIntoView();
     DOMPurify.removeAllHooks();
+  }
+
+  collapseConsecutiveSubstitutionTags(html, substitution) {
+    // Remove all consecutive occurances of substitution (e.g. <p></p>) from html, include tags with only whitespace
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = html;
+    const tags = tempDiv.querySelectorAll(substitution);
+    let removeNextTag = false;
+    tags.forEach(tag => {
+      if (!removeNextTag) {
+        removeNextTag = true;
+        return;
+      }
+
+      if (tag.firstChild === null || (tag.firstChild.nodeType === 3 && tag.firstChild.nodeValue.trim() === '')) {
+        tag.parentNode.removeChild(tag);
+      } else {
+        removeNextTag = false;
+      }
+    });
+    return tempDiv.innerHTML;
   }
 
   tableHeadersToCells(html) {
@@ -368,6 +392,9 @@ class QuillPasteSmart extends Clipboard {
       'noscript',
       'ol',
       'pre',
+      'table',
+      'tfoot',
+      'tr',
       'ul',
       'video',
     ];
@@ -408,7 +435,7 @@ class QuillPasteSmart extends Clipboard {
     html = DOMPurify.sanitize(html, { ...DOMPurifyOptions, ...{ RETURN_DOM: true, WHOLE_DOCUMENT: false } });
     DOMPurify.removeAllHooks();
 
-    return html;
+    return [html, substitution];
   }
 
   isURL(str) {
