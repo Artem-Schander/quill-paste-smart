@@ -103,8 +103,13 @@ class QuillPasteSmart extends Clipboard {
         content = DOMPurify.sanitize(html, DOMPurifyOptions);
         delta = delta.insert(content);
       } else {
-        // Convert table headers to cells
-        html = this.tableHeadersToCells(html);
+        if (DOMPurifyOptions.ALLOWED_TAGS.includes('table')) {
+          // Convert table headers to cells
+          html = this.tableHeadersToCells(html);
+        } else {
+          // Convert rows and cells to block and inline content 
+          html = this.convertTableContent(html);
+        }
 
         if (this.substituteBlockElements !== false) {
           let substitution;
@@ -180,6 +185,33 @@ class QuillPasteSmart extends Clipboard {
         th.parentNode.replaceChild(td, th);
       });
     });
+    return tempDiv.innerHTML;
+  }
+
+  convertTableContent(html) {
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = html;
+
+    // Convert <tr> elements to <p> elements, concatenate td & th cell contents with inner space added
+    tempDiv.querySelectorAll('tr').forEach(tr => {
+      tr.outerHTML = `<p>${Array.from(tr.querySelectorAll('td, th')).map(cell => cell.innerHTML).join(' ')}</p>`
+    });
+
+    // Convert orphan td & th elements to their innerHTML plus trailing space
+    tempDiv.querySelectorAll('td, th').forEach(cell => {
+      cell.outerHTML = `${cell.innerHTML} `;
+    });
+  
+    // Collapse thead, tbody, and tfoot elements to their innerHTML
+    tempDiv.querySelectorAll('thead, tbody, tfoot').forEach(rowContainers => {
+      rowContainers.outerHTML = rowContainers.innerHTML;
+    });
+
+    // Collapse table elements to their innerHTML
+    tempDiv.querySelectorAll('table').forEach(tableEle => {
+      tableEle.outerHTML = tableEle.innerHTML;
+    });
+
     return tempDiv.innerHTML;
   }
 
@@ -392,9 +424,6 @@ class QuillPasteSmart extends Clipboard {
       'noscript',
       'ol',
       'pre',
-      'table',
-      'tfoot',
-      'tr',
       'ul',
       'video',
     ];
