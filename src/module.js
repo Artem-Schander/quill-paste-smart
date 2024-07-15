@@ -141,9 +141,9 @@ class QuillPasteSmart extends Clipboard {
 
   collapseConsecutiveSubstitutionTags(html, substitution) {
     // Remove all consecutive occurances of substitution (e.g. <p></p>) from html, include tags with only whitespace
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = html;
-    const tags = tempDiv.querySelectorAll(substitution);
+    const parser = new DOMParser()
+    const doc = parser.parseFromString(html, 'text/html');
+    const tags = doc.querySelectorAll(substitution);
     let removeNextTag = false;
     tags.forEach(tag => {
       if (!removeNextTag) {
@@ -157,15 +157,15 @@ class QuillPasteSmart extends Clipboard {
         removeNextTag = false;
       }
     });
-    return tempDiv.innerHTML;
+    return doc.body.innerHTML;
   }
 
   tableHeadersToCells(html) {
     // Quill table doesn't support header cells
     // Move first <tr> from <thead> to <tbody>, convert all <th> to <td>
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = html;
-    const tables = tempDiv.querySelectorAll('table');
+    const parser = new DOMParser()
+    const doc = parser.parseFromString(html, 'text/html');
+    const tables = doc.querySelectorAll('table');
     tables.forEach(table => {
       // Check if the table has a <thead> element
       const thead = table.querySelector('thead');
@@ -185,34 +185,34 @@ class QuillPasteSmart extends Clipboard {
         th.parentNode.replaceChild(td, th);
       });
     });
-    return tempDiv.innerHTML;
+    return `<html>${doc.body.outerHTML}<html>`;
   }
 
   convertTableContent(html) {
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = html;
+    const parser = new DOMParser()
+    const doc = parser.parseFromString(html, 'text/html');
 
     // Convert <tr> elements to <p> elements, concatenate td & th cell contents with inner space added
-    tempDiv.querySelectorAll('tr').forEach(tr => {
+    doc.querySelectorAll('tr').forEach(tr => {
       tr.outerHTML = `<p>${Array.from(tr.querySelectorAll('td, th')).map(cell => cell.innerHTML).join(' ')}</p>`
     });
 
     // Convert orphan td & th elements to their innerHTML plus trailing space
-    tempDiv.querySelectorAll('td, th').forEach(cell => {
+    doc.querySelectorAll('td, th').forEach(cell => {
       cell.outerHTML = `${cell.innerHTML} `;
     });
   
     // Collapse thead, tbody, and tfoot elements to their innerHTML
-    tempDiv.querySelectorAll('thead, tbody, tfoot').forEach(rowContainers => {
+    doc.querySelectorAll('thead, tbody, tfoot').forEach(rowContainers => {
       rowContainers.outerHTML = rowContainers.innerHTML;
     });
 
     // Collapse table elements to their innerHTML
-    tempDiv.querySelectorAll('table').forEach(tableEle => {
+    doc.querySelectorAll('table').forEach(tableEle => {
       tableEle.outerHTML = tableEle.innerHTML;
     });
 
-    return tempDiv.innerHTML;
+    return `<html>${doc.body.outerHTML}<html>`;
   }
 
   getDOMPurifyOptions() {
