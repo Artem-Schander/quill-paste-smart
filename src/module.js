@@ -42,9 +42,10 @@ class QuillPasteSmart extends Clipboard {
     let content = text;
 
     if (
+      this.magicPasteLinks &&
       !html &&
       DOMPurifyOptions.ALLOWED_TAGS.includes('a') &&
-      this.isURL(text) && range.length > 0 && this.magicPasteLinks
+      this.isURL(text) && range.length > 0
     ) {
       content = this.quill.getText(range.index, range.length);
       delta = delta.insert(content, {
