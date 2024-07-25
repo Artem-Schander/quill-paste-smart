@@ -20,6 +20,13 @@ npm i quill-paste-smart
 # or: yarn add quill-paste-smart
 ```
 
+If you are using Quill v1, you must also install the [v1](https://github.com/Artem-Schander/quill-paste-smart/tree/legacy) of this package
+
+```bash
+npm i quill-paste-smart@^1
+# or: yarn add quill-paste-smart@^1
+```
+
 <br>
 
 ### Usage
