@@ -14,26 +14,21 @@ class QuillPasteSmart extends Clipboard {
     this.magicPasteLinks = options.magicPasteLinks;
     this.hooks = options.hooks;
     this.handleImagePaste = options.handleImagePaste;
+    this.customButtons = options.customButtons;
+    this.removeConsecutiveSubstitutionTags = options.removeConsecutiveSubstitutionTags;
   }
 
-  onPaste(e) {
+  onCapturePaste(e) {
+    if (e.defaultPrevented || !this.quill.isEnabled()) return;
+
     e.preventDefault();
+
     const range = this.quill.getSelection();
+    if (range == null)  return;
 
-    let text;
-    let html;
-    let file;
-
-    if ((!e.clipboardData || !e.clipboardData.getData) &&
-      (window.clipboardData && window.clipboardData.getData)) {
-      // compatibility with older IE versions
-      text = window.clipboardData.getData('Text');
-    } else {
-      text = e.clipboardData.getData('text/plain');
-      html = e.clipboardData.getData('text/html');
-      file = e.clipboardData?.items?.[0];
-    }
-
+    let text = e.clipboardData?.getData('text/plain');
+    let html = e.clipboardData?.getData('text/html');
+    let file = e.clipboardData?.items?.[0];
     let delta = new Delta().retain(range.index).delete(range.length);
 
     const DOMPurifyOptions = this.getDOMPurifyOptions();
@@ -108,14 +103,26 @@ class QuillPasteSmart extends Clipboard {
         content = DOMPurify.sanitize(html, DOMPurifyOptions);
         delta = delta.insert(content);
       } else {
+        if (DOMPurifyOptions.ALLOWED_TAGS.includes('table')) {
+          // Convert table headers to cells
+          html = this.tableHeadersToCells(html);
+        } else {
+          // Convert rows and cells to block and inline content 
+          html = this.convertTableContent(html);
+        }
+
         if (this.substituteBlockElements !== false) {
+          let substitution;
           // html = DOMPurify.sanitize(html, { ...DOMPurifyOptions, ...{ RETURN_DOM: true, WHOLE_DOCUMENT: false } });
-          html = this.substitute(html, DOMPurifyOptions);
+          [html, substitution] = this.substitute(html, DOMPurifyOptions);
           content = html.innerHTML;
+          if (this.removeConsecutiveSubstitutionTags) {
+            content = this.collapseConsecutiveSubstitutionTags(content, substitution);
+          }
         } else {
           content = DOMPurify.sanitize(html, DOMPurifyOptions);
         }
-        delta = delta.concat(this.convert(content));
+        delta = delta.concat(this.convert({ html: content }));
       }
     }
 
@@ -123,13 +130,89 @@ class QuillPasteSmart extends Clipboard {
 
     if (!plainText) {
       // move cursor
-      delta = this.convert(content);
+      delta = this.convert({ html: content });
     }
 
     if (this.keepSelection) this.quill.setSelection(range.index, delta.length(), Quill.sources.SILENT);
     else this.quill.setSelection(range.index + delta.length(), Quill.sources.SILENT);
-    this.quill.scrollIntoView();
+    this.quill.scrollSelectionIntoView();
     DOMPurify.removeAllHooks();
+  }
+
+  collapseConsecutiveSubstitutionTags(html, substitution) {
+    // Remove all consecutive occurances of substitution (e.g. <p></p>) from html, include tags with only whitespace
+    const parser = new DOMParser()
+    const doc = parser.parseFromString(html, 'text/html');
+    const tags = doc.querySelectorAll(substitution);
+    let removeNextTag = false;
+    tags.forEach(tag => {
+      if (!removeNextTag) {
+        removeNextTag = true;
+        return;
+      }
+
+      if (tag.firstChild === null || (tag.firstChild.nodeType === 3 && tag.firstChild.nodeValue.trim() === '')) {
+        tag.parentNode.removeChild(tag);
+      } else {
+        removeNextTag = false;
+      }
+    });
+    return doc.body.innerHTML;
+  }
+
+  tableHeadersToCells(html) {
+    // Quill table doesn't support header cells
+    // Move first <tr> from <thead> to <tbody>, convert all <th> to <td>
+    const parser = new DOMParser()
+    const doc = parser.parseFromString(html, 'text/html');
+    const tables = doc.querySelectorAll('table');
+    tables.forEach(table => {
+      // Check if the table has a <thead> element
+      const thead = table.querySelector('thead');
+      if (thead) {
+        // Move the <thead>'s first <tr> child to be the first child of <tbody>
+        const tbody = table.querySelector('tbody');
+        if (tbody) {
+          const firstRow = thead.querySelector('tr');
+          tbody.insertBefore(firstRow, tbody.firstChild);
+        }
+      }
+      // Convert all <th> elements to <td> elements
+      const thElements = table.querySelectorAll('th');
+      thElements.forEach(th => {
+        const td = document.createElement('td');
+        td.innerHTML = th.innerHTML;
+        th.parentNode.replaceChild(td, th);
+      });
+    });
+    return `<html>${doc.body.outerHTML}<html>`;
+  }
+
+  convertTableContent(html) {
+    const parser = new DOMParser()
+    const doc = parser.parseFromString(html, 'text/html');
+
+    // Convert <tr> elements to <p> elements, concatenate td & th cell contents with inner space added
+    doc.querySelectorAll('tr').forEach(tr => {
+      tr.outerHTML = `<p>${Array.from(tr.querySelectorAll('td, th')).map(cell => cell.innerHTML).join(' ')}</p>`
+    });
+
+    // Convert orphan td & th elements to their innerHTML plus trailing space
+    doc.querySelectorAll('td, th').forEach(cell => {
+      cell.outerHTML = `${cell.innerHTML} `;
+    });
+  
+    // Collapse thead, tbody, and tfoot elements to their innerHTML
+    doc.querySelectorAll('thead, tbody, tfoot').forEach(rowContainers => {
+      rowContainers.outerHTML = rowContainers.innerHTML;
+    });
+
+    // Collapse table elements to their innerHTML
+    doc.querySelectorAll('table').forEach(tableEle => {
+      tableEle.outerHTML = tableEle.innerHTML;
+    });
+
+    return `<html>${doc.body.outerHTML}<html>`;
   }
 
   getDOMPurifyOptions() {
@@ -263,6 +346,8 @@ class QuillPasteSmart extends Clipboard {
               tidy.ALLOWED_ATTR.push('src');
               tidy.ALLOWED_ATTR.push('title');
               tidy.ALLOWED_ATTR.push('alt');
+              tidy.ALLOWED_ATTR.push('height');
+              tidy.ALLOWED_ATTR.push('width');
             }
             break;
 
@@ -274,6 +359,8 @@ class QuillPasteSmart extends Clipboard {
               tidy.ALLOWED_ATTR.push('frameborder');
               tidy.ALLOWED_ATTR.push('allowfullscreen');
               tidy.ALLOWED_ATTR.push('src');
+              tidy.ALLOWED_ATTR.push('height');
+              tidy.ALLOWED_ATTR.push('width');
             }
             break;
 
@@ -282,8 +369,30 @@ class QuillPasteSmart extends Clipboard {
               tidy.ALLOWED_TAGS.push(control[0]);
             }
             break;
+
+          case 'table':
+            if (undefinedTags) {
+              tidy.ALLOWED_TAGS.push('table');
+              tidy.ALLOWED_TAGS.push('tr');
+              tidy.ALLOWED_TAGS.push('td');
+            }
+            break;
         }
       });
+
+      // support custom toolbar buttons from options
+      if (toolbar?.controls) {
+        this.customButtons?.forEach((button) => {
+          if (toolbar.controls.some(control => control[0] === button.module)) {
+            button.allowedTags?.forEach((tag) => {
+              tidy.ALLOWED_TAGS.push(tag);
+            });
+            button.allowedAttr?.forEach((attr) => {
+              tidy.ALLOWED_ATTR.push(attr);
+            });
+          }
+        });
+      }
     }
 
     return tidy;
@@ -315,8 +424,6 @@ class QuillPasteSmart extends Clipboard {
       'noscript',
       'ol',
       'pre',
-      'table',
-      'tfoot',
       'ul',
       'video',
     ];
@@ -357,63 +464,7 @@ class QuillPasteSmart extends Clipboard {
     html = DOMPurify.sanitize(html, { ...DOMPurifyOptions, ...{ RETURN_DOM: true, WHOLE_DOCUMENT: false } });
     DOMPurify.removeAllHooks();
 
-    // fix quill bug #3333
-    // span content placed into the next tag
-
-    const createElement = (node) => {
-      const element = document.createElement(node.tagName.toLowerCase());
-      const attributes = node.attributes;
-      if (attributes.length) {
-        Array.from(attributes).forEach(el => element.setAttribute(el.nodeName, el.value));
-      }
-      return element;
-    }
-
-    let depth = 0;
-    const walkTheDOM = (node, func) => {
-      func(node, depth);
-      // node = node.firstChild;
-      if (depth <= 1) node = node.firstChild;
-      else node = undefined;
-      while (node) {
-        ++depth;
-        walkTheDOM(node, func);
-        node = node.nextSibling;
-      }
-      --depth;
-    };
-
-    let block;
-    const fixedDom = document.createElement('body');
-    walkTheDOM(html, (node, depth) => {
-      if (depth === 1) {
-        if (node.tagName && blockElements.includes(node.tagName.toLowerCase())) {
-          if (block) block = undefined;
-          const element = createElement(node);
-
-          element.innerHTML = node.innerHTML;
-          fixedDom.appendChild(element);
-        } else {
-          if (block === undefined) {
-            block = document.createElement(substitution);
-            fixedDom.appendChild(block);
-          }
-
-          if (node.tagName) {
-            const element = createElement(node);
-
-            if (node.innerHTML) element.innerHTML = node.innerHTML;
-            block.appendChild(element);
-          } else {
-            // plain text
-            const element = document.createTextNode(node.textContent);
-            block.appendChild(element);
-          }
-        }
-      }
-    });
-
-    return fixedDom;
+    return [html, substitution];
   }
 
   isURL(str) {
