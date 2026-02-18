@@ -31,11 +31,33 @@ npm i quill-paste-smart@^1
 
 ### Usage
 
-Since this plugin registers itself, it is sufficient to just import it.
+Register the smart clipboard explicitly.
 
 ```javascript
 import Quill from 'quill';
-import 'quill-paste-smart';
+import { registerPasteSmartClipboard } from 'quill-paste-smart';
+
+registerPasteSmartClipboard(Quill);
+```
+
+If you prefer manual registration, the default export is still available:
+
+```javascript
+import Quill from 'quill';
+import QuillPasteSmart from 'quill-paste-smart';
+
+Quill.register('modules/clipboard', QuillPasteSmart, true);
+```
+
+When using `quill-table-better`, register table-better first, then register paste-smart so it composes on top of the current clipboard class:
+
+```javascript
+import Quill from 'quill';
+import QuillTableBetter from 'quill-table-better';
+import { registerPasteSmartClipboard } from 'quill-paste-smart';
+
+Quill.register({ 'modules/table-better': QuillTableBetter }, true);
+registerPasteSmartClipboard(Quill);
 ```
 
 <br>
@@ -66,6 +88,7 @@ const options = {
     theme: 'snow',
     modules: {
         clipboard: {
+            enabled: true,
             allowed: {
                 tags: ['a', 'b', 'strong', 'u', 's', 'i', 'p', 'br', 'ul', 'ol', 'li', 'span'],
                 attributes: ['href', 'rel', 'target', 'class']
@@ -99,11 +122,32 @@ new Quill('#editor', options);
 > :raised_hand: **Probably you don't need a custom configuration.**  
 > You could stick with the default settings by completely omit the `clipboard` object in your quill options.
 
+Per-editor toggle example:
+
+```javascript
+new Quill('#editor-a', {
+    modules: {
+        clipboard: {
+            enabled: true,
+        },
+    },
+});
+
+new Quill('#editor-b', {
+    modules: {
+        clipboard: {
+            enabled: false,
+        },
+    },
+});
+```
+
 
 #### Configuration Object
 
 | key                     |                         valid values                         | default value |       type        | description                                                                                                                                                                                                                                                                                                                                                  |
 | :---------------------- | :----------------------------------------------------------: | :-----------: | :---------------: | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| enabled                   |                        `true` `false`                        |    `true`     |     `Boolean`     | Enables smart paste for the editor instance. Set to `false` to fully delegate paste handling to the base clipboard module. |
 | allowed.tags              |                          HTML tags                           |  `undefined`  |  `Array<string>`  | Here you can define any HTML tag that should be allowed to be pasted. If this setting is not specified, allowed tags are determined by possible formats in the toolbar                                                                                                                                                                                       |
 | allowed.attributes        |                       HTML attributes                        |  `undefined`  |  `Array<string>`  | Here you can define any HTML attributes that should be allowed to be pasted. If this setting is not specified, allowed attributes are determined by possible formats in the toolbar                                                                                                                                                                          |
 | customButtons             |                       Array of button description objects    |  `undefined`  |  `Array<object>`  | Here you can add custom toolbar buttons with the associated tags and attributes that are allowed in relation to those buttons. |
@@ -138,6 +182,8 @@ It is possible to use this module by including it though a `<script>` tag. Here 
     <script src="https://unpkg.com/quill-paste-smart@latest/dist/quill-paste-smart.js"></script>
 
     <script>
+        QuillPasteSmart.registerPasteSmartClipboard(Quill);
+
         var quill = new Quill('#editor', {
             theme: 'snow',
             modules: {
