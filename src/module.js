@@ -1,14 +1,12 @@
 import Quill from 'quill';
 import DOMPurify from 'dompurify';
 
-const Clipboard = Quill.import('modules/clipboard');
-const Delta = Quill.import('delta');
-
-class QuillPasteSmart extends Clipboard {
-  constructor(quill, options) {
+export const createPasteSmartClipboard = (BaseClipboard) => class QuillPasteSmart extends BaseClipboard {
+  constructor(quill, options = {}) {
     super(quill, options);
 
     this.allowed = options.allowed;
+    this.enabled = options.enabled !== false;
     this.keepSelection = options.keepSelection;
     this.substituteBlockElements = options.substituteBlockElements;
     this.magicPasteLinks = options.magicPasteLinks;
@@ -19,12 +17,17 @@ class QuillPasteSmart extends Clipboard {
   }
 
   onCapturePaste(e) {
+    if (this.enabled === false) return super.onCapturePaste(e);
+
     if (e.defaultPrevented || !this.quill.isEnabled()) return;
 
     e.preventDefault();
 
     const range = this.quill.getSelection();
     if (range == null)  return;
+
+    const Delta = this.quill.constructor.import('delta');
+    const QuillSources = this.quill.constructor.sources;
 
     let text = e.clipboardData?.getData('text/plain');
     let html = e.clipboardData?.getData('text/html');
@@ -126,15 +129,15 @@ class QuillPasteSmart extends Clipboard {
       }
     }
 
-    this.quill.updateContents(delta, Quill.sources.USER);
+    this.quill.updateContents(delta, QuillSources.USER);
 
     if (!plainText) {
       // move cursor
       delta = this.convert({ html: content });
     }
 
-    if (this.keepSelection) this.quill.setSelection(range.index, delta.length(), Quill.sources.SILENT);
-    else this.quill.setSelection(range.index + delta.length(), Quill.sources.SILENT);
+    if (this.keepSelection) this.quill.setSelection(range.index, delta.length(), QuillSources.SILENT);
+    else this.quill.setSelection(range.index + delta.length(), QuillSources.SILENT);
     this.quill.scrollSelectionIntoView();
     DOMPurify.removeAllHooks();
   }
@@ -471,7 +474,21 @@ class QuillPasteSmart extends Clipboard {
     const pattern = /^(?:(?:https?|ftp):\/\/)(?:\S+(?::\S*)?@)?(?:(?!10(?:\.\d{1,3}){3})(?!127(?:\.\d{1,3}){3})(?!169\.254(?:\.\d{1,3}){2})(?!192\.168(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]+-?)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]+-?)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,})))(?::\d{2,5})?(?:\/[^\s]*)?$/isu;
     return !!pattern.test(str);
   }
-}
+};
 
-Quill.register('modules/clipboard', QuillPasteSmart, true);
+export const registerPasteSmartClipboard = (Quill, options = {}) => {
+  const {
+    baseModulePath = 'modules/clipboard',
+    targetModulePath = 'modules/clipboard',
+    overwrite = true,
+  } = options;
+
+  const BaseClipboard = Quill.import(baseModulePath);
+  const QuillPasteSmart = createPasteSmartClipboard(BaseClipboard);
+  Quill.register(targetModulePath, QuillPasteSmart, overwrite);
+
+  return QuillPasteSmart;
+};
+
+const QuillPasteSmart = createPasteSmartClipboard(Quill.import('modules/clipboard'));
 export default QuillPasteSmart;
