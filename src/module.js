@@ -16,6 +16,7 @@ class QuillPasteSmart extends Clipboard {
     this.handleImagePaste = options.handleImagePaste;
     this.customButtons = options.customButtons;
     this.removeConsecutiveSubstitutionTags = options.removeConsecutiveSubstitutionTags;
+    this.removeEmptyParagraphs = options.removeEmptyParagraphs;
   }
 
   onCapturePaste(e) {
@@ -111,8 +112,8 @@ class QuillPasteSmart extends Clipboard {
           html = this.convertTableContent(html);
         }
 
+        let substitution;
         if (this.substituteBlockElements !== false) {
-          let substitution;
           // html = DOMPurify.sanitize(html, { ...DOMPurifyOptions, ...{ RETURN_DOM: true, WHOLE_DOCUMENT: false } });
           [html, substitution] = this.substitute(html, DOMPurifyOptions);
           content = html.innerHTML;
@@ -121,6 +122,9 @@ class QuillPasteSmart extends Clipboard {
           }
         } else {
           content = DOMPurify.sanitize(html, DOMPurifyOptions);
+        }
+        if (this.removeEmptyParagraphs) {
+          content = this.stripEmptyParagraphs(content, substitution);
         }
         delta = delta.concat(this.convert({ html: content }));
       }
@@ -155,6 +159,21 @@ class QuillPasteSmart extends Clipboard {
         tag.parentNode.removeChild(tag);
       } else {
         removeNextTag = false;
+      }
+    });
+    return doc.body.innerHTML;
+  }
+
+  stripEmptyParagraphs(html, substitution) {
+    // Remove paragraphs (and substituted block tags) that hold nothing but whitespace, e.g. Outlook's
+    // <p>&nbsp;</p> or Apple Mail's <div><br></div>. Sources that reset paragraph margins use them as
+    // blank lines; editors that style paragraphs with margins render each one as an extra blank line.
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    const selector = substitution && substitution !== 'p' ? `p, ${substitution}` : 'p';
+    doc.querySelectorAll(selector).forEach(tag => {
+      if (tag.textContent.trim() === '' && !tag.querySelector('img, iframe, video, table')) {
+        tag.parentNode.removeChild(tag);
       }
     });
     return doc.body.innerHTML;

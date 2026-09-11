@@ -89,7 +89,8 @@ const options = {
             handleImagePaste(image) {
                 console.log("Image file pasted", image);
             },
-            removeConsecutiveSubstitutionTags: true
+            removeConsecutiveSubstitutionTags: true,
+            removeEmptyParagraphs: true
         },
     },
 };
@@ -116,6 +117,7 @@ new Quill('#editor', options);
 | hooks                     | [DOMPurify Hooks](https://github.com/cure53/DOMPurify#hooks) |  `undefined`  | `Array<function>` | Here you can define any of the DOMPurify hooks. This can be handy if you need to cusomtize the HTML sanitizer. For more information see the [hook demos](https://github.com/cure53/DOMPurify/tree/main/demos) from DOMPurify.<br>**BE AWARE**<br>Here you can mess up things. E.g. You could create an infinite loop by adding not allowed tags to the node. |
 | handleImagePaste          |                      `function (File)`                       |  `undefined`  | `function (File)` | Here you can define custom behavior for handling images being pasted, you can use this to upload the image to a CDN rather than embedding                                                                                                                                                                                                                    |                                                                                                                                                                                                                  |
 | removeConsecutiveSubstitutionTags |                        `true` `false`                        |    `undefined`    |     `Boolean`     | If this setting is set to `true` the pasted content will have consecutive occurances of the chosen substitution element removed after pasting it. Otherwise the the pasted conntent will not be affected. Note this setting is in effect only when substituteBlockElements is not false. |
+| removeEmptyParagraphs | `true` `false` | `undefined` | `Boolean` | If this setting is set to `true` paragraphs that contain nothing but whitespace are removed from the pasted content, e.g. Outlook's `<p>&nbsp;</p>` or Apple Mail's `<div><br></div>` (after block substitution). Those sources reset paragraph margins and use empty paragraphs as blank lines, so an editor that styles paragraphs with margins would render each one as an extra blank line. Leave it off if your editor keeps Quill's zero paragraph margin, otherwise pasted blank lines disappear. |
 <br>
 
 ### CommonJS
